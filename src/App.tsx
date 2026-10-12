@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import './planets.css';
 import { createPortal } from 'react-dom';
 import type { CSSProperties, FormEvent, ReactNode } from 'react';
 import { ArrowDownToLine, ArrowRight, BookHeart, Bookmark, Check, ChevronDown, ChevronRight, Compass, Crosshair, Eye, Grid3X3, ImagePlus, LoaderCircle, LogOut, Mail, Maximize2, Minus, Mountain, Orbit, Pencil, Plus, Settings2, ShieldCheck, Sparkles, Star as StarIcon, Telescope, Trash2, Upload, UserRound, X } from 'lucide-react';
@@ -17,6 +18,8 @@ import type { SkyRegion, SkyRegionId } from './sky-regions';
 import { isAndroidApp } from './platform';
 import type { SkyHandle } from './SkyCanvas';
 import type { Memory, MemoryCategory, MemoryDraft, MemoryTheme, Page, Star, User } from './types';
+
+const Planetarium=lazy(()=>import('./Planetarium'));
 
 function MirrorLogo({small=false}:{small?:boolean}) {
   return <svg className={small?'mirror-logo small':'mirror-logo'} width="36" height="42" viewBox="0 0 36 42" fill="none" aria-hidden="true"><ellipse cx="15" cy="17" rx="10" ry="13" stroke="currentColor" strokeWidth="1.5"/><ellipse cx="15" cy="17" rx="7" ry="10" stroke="currentColor" strokeWidth="0.7" opacity="0.45"/><path d="M15 30v8m-7 0h14M28 2v10m-5-5h10M12 12l-2 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>;
@@ -139,6 +142,7 @@ function getPage():Page { const hash=window.location.hash.slice(1);return hash==
 
 export default function App() {
   const [page,setPage]=useState<Page>(getPage);
+  const [planetView,setPlanetView]=useState(()=>window.location.hash==='#planets');
   const [user,setUser]=useState<User|null>(null);
   const [memories,setMemories]=useState<Memory[]>(()=>readGuestMemories(demoMemories));
   const [favorites,setFavorites]=useState<string[]>(readFavorites);
@@ -171,9 +175,9 @@ export default function App() {
     async function load(){try{const {user:current}=await api.me();if(current){const [data,saved]=await Promise.all([api.memories(),api.favorites()]);if(active){setUser(current);setMemories(data.memories);setFavorites(saved.favorites);}}}catch{if(active)setToast('暂时无法连接账号服务，可以先体验星空与书架。');}finally{if(active)setReady(true);}}
     load();return()=>{active=false;};
   },[]);
-  useEffect(()=>{function change(){setPage(getPage());setSettings(false);}window.addEventListener('hashchange',change);return()=>window.removeEventListener('hashchange',change);},[]);
+  useEffect(()=>{function change(){setPage(getPage());setPlanetView(window.location.hash==='#planets');setSettings(false);}window.addEventListener('hashchange',change);return()=>window.removeEventListener('hashchange',change);},[]);
   useEffect(()=>{if(toast){const timer=setTimeout(()=>setToast(''),4200);return()=>clearTimeout(timer);}},[toast]);
-  useEffect(()=>{if(page==='sky'){if(focusAfterMount.current){sky.current?.focus(focusAfterMount.current);focusAfterMount.current=null;}if(regionAfterMount.current){const group=regionAfterMount.current;sky.current?.region(group.ra,group.dec,group.fov);regionAfterMount.current=null;}}},[page]);
+  useEffect(()=>{if(page==='sky'&&!planetView){if(focusAfterMount.current){sky.current?.focus(focusAfterMount.current);focusAfterMount.current=null;}if(regionAfterMount.current){const group=regionAfterMount.current;sky.current?.region(group.ra,group.dec,group.fov);regionAfterMount.current=null;}}},[page,planetView]);
   useEffect(()=>{function change(){setFullscreen(!!document.fullscreenElement);}document.addEventListener('fullscreenchange',change);return()=>document.removeEventListener('fullscreenchange',change);},[]);
   useEffect(()=>{savePreferences({lines,labels,grid,landscape,density,starSize});},[lines,labels,grid,landscape,density,starSize]);
   useEffect(()=>{
@@ -183,18 +187,18 @@ export default function App() {
       if(detail){setDetail(null);return true;}
       if(settings){setSettings(false);return true;}
       if(selectedStar){setSelectedStar(null);return true;}
-      if(page!=='sky'){navigate('sky');return true;}
+      if(page!=='sky'||planetView){navigate('sky');return true;}
       if(exploring){sky.current?.reset();setExploring(false);return true;}
       return false;
     };
     return()=>{delete window.jingliuHandleBack;};
-  },[modal,detail,settings,selectedStar,page,exploring,importBusy]);
+  },[modal,detail,settings,selectedStar,page,planetView,exploring,importBusy]);
   function visitRegion(region:SkyRegion){setSelectedStar(null);setSettings(false);setExploring(true);setActiveRegion(region.id);sky.current?.region(region.ra,region.dec,region.fov);}
-  function navigate(next:Page){setPage(next);window.location.hash=next;setSettings(false);window.scrollTo({top:0,behavior:'instant'});}
+  function navigate(next:Page){setPage(next);setPlanetView(false);window.location.hash=next;setSettings(false);window.scrollTo({top:0,behavior:'instant'});}
   function newMemory(){if(!ready){setToast('正在载入你的星空，请稍候。');return;}setEditing(undefined);setModal('editor');}
-  function selectStar(star:Star){setExploring(true);setSelectedStar(star);setModal(null);setSettings(false);if(page!=='sky'){focusAfterMount.current=star.id;navigate('sky');}else sky.current?.focus(star.id);}
+  function selectStar(star:Star){setExploring(true);setSelectedStar(star);setModal(null);setSettings(false);if(page!=='sky'||planetView){focusAfterMount.current=star.id;navigate('sky');}else sky.current?.focus(star.id);}
   function openAtlas(tab:'constellations'|'favorites'='constellations'){setAtlasTab(tab);setSettings(false);setModal('atlas');}
-  function visitConstellation(group:Constellation){setModal(null);setSelectedStar(null);setExploring(true);if(page!=='sky'){regionAfterMount.current=group;navigate('sky');}else sky.current?.region(group.ra,group.dec,group.fov);setToast(`来到${group.name}，点击一颗星开始相遇。`);}
+  function visitConstellation(group:Constellation){setModal(null);setSelectedStar(null);setExploring(true);if(page!=='sky'||planetView){regionAfterMount.current=group;navigate('sky');}else sky.current?.region(group.ra,group.dec,group.fov);setToast(`来到${group.name}，点击一颗星开始相遇。`);}
   async function toggleFavorite(){
     if(!selectedStar||favoriteBusy||!ready)return;
     const id=selectedStar.id,saved=favorites.includes(id),next=saved?favorites.filter(value=>value!==id):[...favorites,id];
@@ -212,7 +216,7 @@ export default function App() {
       setToast(`已导入 ${result.imported} 段记忆，跳过 ${result.skipped} 段重复内容，收藏已合并。`);
     }finally{setImportBusy(false);}
   }
-  function locate(memory:Memory){const star=starMap[memory.starId];if(!star)return;setExploring(true);setDetail(null);setSelectedStar(star);if(page!=='sky'){focusAfterMount.current=star.id;navigate('sky');}else sky.current?.focus(star.id);}
+  function locate(memory:Memory){const star=starMap[memory.starId];if(!star)return;setExploring(true);setDetail(null);setSelectedStar(star);if(page!=='sky'||planetView){focusAfterMount.current=star.id;navigate('sky');}else sky.current?.focus(star.id);}
   async function save(draft:MemoryDraft,id?:string){
     let next:Memory[];
     if(user){const result=id?await api.update(id,draft):await api.create(draft);next=id?memories.map(m=>m.id===id?result.memory:m):[...memories,result.memory];}
@@ -231,14 +235,15 @@ export default function App() {
   const selectedMemories=selectedStar?memories.filter(m=>m.starId===selectedStar.id):[];
   return <div className={`app page-${page}`}>
     <header className="site-header"><button className="brand" onClick={()=>navigate('sky')} aria-label="镜留首页"><MirrorLogo/><span className="brand-name">镜留<small>JINGLIU</small></span><span className="brand-tagline">让时光，有处安放</span></button><nav className="desktop-nav" aria-label="主导航"><button className={page==='sky'?'active':''} aria-current={page==='sky'?'page':undefined} onClick={()=>navigate('sky')}><Orbit size={17}/> 星海漫游</button><button className={page==='shelf'?'active':''} aria-current={page==='shelf'?'page':undefined} onClick={()=>navigate('shelf')}><BookHeart size={17}/> 留下的镜<span className="nav-count">{memories.length}</span></button></nav><div className="header-actions"><button className={`profile-button ${page==='profile'?'active':''}`} onClick={()=>navigate('profile')} aria-label="我的空间"><span className="avatar"><UserRound size={17} strokeWidth={1.5}/></span><span>{user?user.name:'我的空间'}</span></button></div></header>
-    {page==='sky'&&<main className={`sky-page ${selectedStar?'has-selection':''} ${exploring?'is-exploring':''}`} ref={skySection}>
+    {page==='sky'&&<main className={`sky-page ${selectedStar?'has-selection':''} ${exploring?'is-exploring':''} ${planetView?'is-planet-view':''}`} ref={skySection}>
       <div className="sky-topbar">
-        <div className="sky-topbar-title"><span className="live-dot"/><span>一片只属于你的星空</span><small>20,000 颗星 · 88 个星座</small></div>
+        <nav className="sky-experience-switch" aria-label="星海体验"><button aria-pressed={!planetView} onClick={()=>navigate('sky')}><Sparkles size={15}/> 恒星漫游</button><button aria-pressed={planetView} onClick={()=>{setPlanetView(true);setSelectedStar(null);setSettings(false);setExploring(false);window.location.hash='planets';}}><Orbit size={16}/> 行星近观</button></nav>
+        {planetView?<span className="planet-top-note">八颗行星 · 一轮月亮</span>:<>
         <div className="sky-search"><SearchBox memories={memories} onExplore={()=>openAtlas()} onStar={selectStar} onMemory={locate}/></div>
         <button className="sky-atlas-button" onClick={()=>openAtlas()} aria-label="星座与收藏 88"><Compass size={17}/><span>星座与收藏</span></button>
-        <button className="sky-settings-trigger" aria-label="星图设置" aria-expanded={settings} onClick={()=>setSettings(true)}><Settings2 size={19}/></button>
+        <button className="sky-settings-trigger" aria-label="星图设置" aria-expanded={settings} onClick={()=>setSettings(true)}><Settings2 size={19}/></button></>}
       </div>
-      <div className="sky-experience">
+      <Suspense fallback={<p className="planet-suspense">正在打开三维星球…</p>}>{planetView?<Planetarium/>:<><div className="sky-experience">
         <div className="sky-story">
           {!selectedStar&&<div className="sky-intro"><div className="sky-eyebrow">把时光，轻轻留下</div><h1>总有一束光，<br/>记得<span>你来过。</span></h1><p>将生活里的小小瞬间，<br/>交给一颗星，慢慢珍藏。</p><div className="sky-intro-note"><span>✧</span> 每一刻，都有回响</div></div>}
           {selectedStar&&<StarPanel star={selectedStar} memories={selectedMemories} favorite={favorites.includes(selectedStar.id)} pending={favoriteBusy||!ready} onFavorite={toggleFavorite} onClose={()=>setSelectedStar(null)} onNew={newMemory} onMemory={setDetail} onSelect={selectStar}/>}
@@ -254,7 +259,7 @@ export default function App() {
       <div className="sky-footer">
         <nav className="sky-regions" aria-label="四季星区">{skyRegions.map((region,index)=><button key={region.id} className={`sky-region region-${region.id}`} style={{'--region-color':region.color} as CSSProperties} aria-label={`${region.name}星区`} aria-pressed={activeRegion===region.id} onClick={()=>visitRegion(region)}><span className="region-number">0{index+1}</span><span><strong>{region.name}</strong><small>{region.note}</small></span><span className="region-count sr-only">{region.count.toLocaleString('zh-CN')} 颗</span></button>)}</nav>
         <div className="sky-actions"><button className="sky-primary" onClick={newMemory}><Plus size={18}/> 留住此刻</button></div>
-      </div>
+      </div></>}</Suspense>
     </main>}
     {settings&&<Modal title="星图设置" closeLabel="关闭星图设置" onClose={()=>setSettings(false)} className="settings-modal"><span className="modal-eyebrow">你的观星偏好</span><h2>让星空，合你心意。</h2><p className="modal-description">留一点空白，让喜欢的光更清晰。</p><div className="sky-mode-switch"><button className={!landscape?'active':''} aria-pressed={!landscape} onClick={()=>setLandscape(false)}><Orbit size={17}/> 星海</button><button className={landscape?'active':''} aria-pressed={landscape} onClick={()=>setLandscape(true)}><Mountain size={17}/> 旷野</button></div>{[{name:'星座连线',icon:<Orbit size={17}/>,value:lines,set:setLines},{name:'星体名称',icon:<Eye size={17}/>,value:labels,set:setLabels},{name:'赤道网格',icon:<Grid3X3 size={17}/>,value:grid,set:setGrid}].map(item=><button className="settings-row" key={item.name} role="switch" aria-checked={item.value} onClick={()=>item.set(!item.value)}>{item.icon}<span>{item.name}</span><i className={`switch ${item.value?'on':''}`}/></button>)}<label className="density-control">微光密度 <span>{density.toFixed(1)} 等</span><input aria-label="微光密度" type="range" min="4" max="8" step="0.5" value={density} onChange={e=>setDensity(Number(e.target.value))}/></label><label className="density-control">星点大小 <span>{Number(starSize.toFixed(2))} 倍</span><input aria-label="星点大小" type="range" min="1" max="2.5" step="0.05" value={starSize} onChange={e=>setStarSize(Number(e.target.value))}/></label><p className="settings-footnote">当前可见 {visibleCount.toLocaleString()} 颗星。放大星空，会看见更多微光。</p></Modal>}
     {page==='shelf'&&<Bookshelf memories={memories} onOpen={setDetail} onNew={newMemory} guest={!user}/>}

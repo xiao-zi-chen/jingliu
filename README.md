@@ -2,29 +2,30 @@
 
 **把回忆，寄存在星光里。**
 
-在 20,000 颗真实恒星之间漫游，把成长、相遇与普通日子里的微光，珍藏成一面镜。镜留提供四季星空、私人记忆书架，以及可以离线使用的 Android 应用。
+在 20,000 颗真实恒星之间漫游，把成长、相遇与普通日子里的微光，珍藏成一面镜。镜留提供四季星空、九个三维天体、私人记忆书架，以及可以离线使用的 Android 应用。
 
-1.2.0 重新整理了整套视觉：独立的观星区、集中的操作入口、疏朗的星光，以及统一的相框与纸感弹窗。
+1.3.0 新增「行星近观」：旋转八颗行星与月球，靠近土星环、地球云层与月面细节。公开地图与补充的模拟纹理分别注明，星图仍保留四季分区与 20,000 颗恒星。
 
-[下载 Android APK](https://github.com/xiao-zi-chen/jingliu/releases/download/v1.2.0/jingliu-1.2.0.apk) · [查看最新版本](https://github.com/xiao-zi-chen/jingliu/releases/latest) · [安装说明](release/安装说明.md)
+[下载 Android APK](https://github.com/xiao-zi-chen/jingliu/releases/download/v1.3.0/jingliu-1.3.0.apk) · [查看最新版本](https://github.com/xiao-zi-chen/jingliu/releases/latest) · [安装说明](release/安装说明.md)
 
-![镜留四季星空](docs/screenshots/sky-desktop.png)
+![镜留三维行星](docs/screenshots/planets-desktop.png)
 
 ## 在镜留，你可以
 
+- **靠近三维星球**：从星海上方进入「行星近观」，探索八颗行星与月球。单指拖动旋转、双指或滚轮缩放，可重置视角、开启或暂停缓慢自转。土星有立体星环与投影，地球使用独立的云层与大气层，月球使用高程贴图表现凹凸。
 - **漫游四时星海**：春 · 初生、夏 · 流萤、秋 · 星语、冬 · 长明。以名称与柔和色调区分，没有分隔线，点击入口即可抵达对应星空。
 - **认识真实星辰**：20,000 颗恒星与 88 个星座，支持中文和英文星名、星座、HIP/HD/HR 编号搜索。查看距离、视星等、赤经赤纬和光谱，收藏喜欢的星星。
 - **看见更有层次的星光**：亮核、渐变光晕与细长星芒，保留冷暖色温与明暗差异。支持拖动、双指缩放、星体大小调节及星海/旷野切换；星名、星座连线和网格默认关闭，放大后逐步呈现暗星。
 - **留下一面镜**：记录文字、日期、人生标签与自己的照片，把回忆寄存在一颗星上。木质书架按成长、生活、心动、旅行分类，支持编辑、删除和定位。
 - **带走珍贵回忆**：导入和导出包含照片、星星坐标及收藏的 JSON 备份。导入先预览，完整重复的记忆自动跳过，大备份自动分卷。
 
-<img src="docs/screenshots/sky-mobile.png" alt="镜留手机星空" width="280" /> <img src="docs/screenshots/shelf-mobile.png" alt="镜留手机记忆书架" width="280" />
+<img src="docs/screenshots/planets-mobile.png" alt="镜留手机三维星球" width="280" /> <img src="docs/screenshots/sky-mobile.png" alt="镜留手机星空" width="280" /> <img src="docs/screenshots/shelf-mobile.png" alt="镜留手机记忆书架" width="280" />
 
 ## Android 应用
 
-下载安装包后传到手机，点击安装即可。最低支持 **Android 8.0**，当前版本 **1.2.0**，安装包约 **2.6 MiB**。
+下载安装包后传到手机，点击安装即可。最低支持 **Android 8.0**，当前版本 **1.3.0**，安装包约 **5.2 MiB**。
 
-APK 内置星表、图片和字体，离线可浏览星空、保存记忆与收藏。照片选择、备份导入和导出使用 Android 系统文件选择器，无需申请相册或外部存储权限。系统返回键优先关闭搜索、弹窗和详情，再回到星空。
+APK 内置星表、三维地图、图片和字体，离线可浏览星空与星球、保存记忆与收藏。三维模式需要设备支持 WebGL 2；不支持或图形上下文丢失时提供可切换的静态预览。照片选择、备份导入和导出使用 Android 系统文件选择器，无需申请相册或外部存储权限。系统返回键优先关闭搜索、弹窗和详情，再回到星空。
 
 **当前 APK 使用本机离线书架，暂不提供账号登录或云端同步。** 记忆与照片保存在本机；换机、卸载或清除应用数据前，请先在「我的 → 带走我的回忆」中导出备份。照片存储有容量限制，空间不足时会提示。网站版保留账号服务，网站备份也可导入 APK。
 
@@ -63,7 +64,7 @@ npm run build:apk
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-apk.ps1 -AndroidSdk "C:\Android\Sdk" -JavaHome "C:\Java\jdk-21"
 ```
 
-脚本构建网页，执行 Android release 构建与 Lint，校验签名，生成 `release/jingliu-1.2.0.apk` 和 SHA-256 文件。Gradle Wrapper 与 Android 源码位于 `android/`。
+脚本构建网页，执行 Android release 构建与 Lint，校验签名，生成 `release/jingliu-1.3.0.apk` 和 SHA-256 文件。Gradle Wrapper 与 Android 源码位于 `android/`。
 
 首次构建会生成项目专属签名，保存在已被 Git 忽略的 `.android-signing/`。请保留该目录用于后续覆盖升级，不要提交或分享其中的私钥和密码。自行构建使用自己的密钥，不能直接覆盖安装使用另一把密钥签名的版本。
 
@@ -77,7 +78,8 @@ npm run test:e2e
 ```
 
 - 10 项接口与数据测试覆盖账号隔离、记忆读写、备份校验、持久化和旧恒星兼容。
-- 36 项浏览器测试覆盖桌面和手机的搜索、点选、缩放、四季导航、照片、备份与记忆流程。Android 离线保存、导出和返回逻辑使用模拟桥接验证。
+- 50 项浏览器测试覆盖桌面和手机的搜索、点选、缩放、四季导航、照片、备份与记忆流程。Android 离线保存、导出和返回逻辑使用模拟桥接验证。
+- 新增三维测试覆盖九个天体、旋转缩放、双指手势、静止与后台停止重绘、地图加载失败、不支持 WebGL 的静态预览与恢复、离线资源和小屏布局。
 - 浏览器测试默认使用本机 Microsoft Edge，可通过 `PLAYWRIGHT_CHANNEL=chrome` 使用 Chrome。测试服务使用 5183/4176 端口及 `.artifacts/e2e.sqlite`，与日常数据分开。
 - APK 通过 release 构建、Android Lint、签名和资源一致性检查。本次未连接 Android 真机，尚未实际安装验证。
 
@@ -96,6 +98,10 @@ npm run test:e2e
 ```text
 src/App.tsx             页面、书架、记忆编辑及交互
 src/SkyCanvas.tsx       星空投影、星芒渲染和手势
+src/Planetarium.tsx     三维天体浏览与布局
+src/planet-renderer.ts  球体、星环、光照、手势与资源回收
+src/planets.ts          天体介绍、公开地图与模拟来源
+scripts/prepare-planets.py  离线地图整理与模拟纹理生成
 src/sky-regions.ts      四季星区和星数统计
 src/catalog.ts         星表、搜索索引和坐标
 src/StarTools.tsx       搜索、星座浏览及恒星资料
@@ -112,6 +118,8 @@ release/               本机 APK 输出及安装说明
 
 ## 数据与素材来源
 
+- 三维地球、月球、木星、火星与土星采用 NASA 公开地图；其余云层或地貌与土星环由程序绘制。详细出处与修改见 [天体素材说明](public/textures/planets/credits.md)。星球尺寸、光照与动画用于欣赏，不提供实时位置或精密观测计算。
+- Three.js：MIT 许可，完整声明见 [Three.js License](public/licenses/three-LICENSE.txt)。
 - 恒星数据：[HYG Database](https://github.com/astronexus/HYG-Database)，CC BY-SA 4.0。使用 v4.0 数据，星数筛选和兼容档案由本项目整理。
 - 星座连线：[Stellarium Western sky culture](https://github.com/Stellarium/stellarium/tree/master/skycultures/western)。声明见 [星表来源说明](public/catalog-credits/)。
 - 中文字体：Noto Serif SC，本地子集，许可见 [OFL.txt](public/fonts/OFL.txt)。

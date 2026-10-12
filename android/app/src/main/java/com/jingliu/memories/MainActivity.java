@@ -107,6 +107,7 @@ public final class MainActivity extends Activity {
             else if (path.endsWith(".svg")) mime = "image/svg+xml";
             else if (path.endsWith(".jpg")) mime = "image/jpeg";
             else if (path.endsWith(".png")) mime = "image/png";
+            else if (path.endsWith(".webp")) mime = "image/webp";
             else if (path.endsWith(".ttf")) mime = "font/ttf";
             else if (path.endsWith(".txt") || path.endsWith(".md")) mime = "text/plain";
             try {
