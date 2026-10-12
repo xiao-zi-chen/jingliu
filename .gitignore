@@ -1,0 +1,19 @@
+node_modules/
+dist/
+data/
+.env
+*.tsbuildinfo
+test-results/
+playwright-report/
+.artifacts/
+.android-signing/
+android/.gradle/
+android/local.properties
+android/**/build/
+android/app/src/main/assets/web/
+release/*.apk
+release/*.sha256
+# Original local design references; public previews live in docs/screenshots/.
+/*.png
+.env.*
+!.env.example

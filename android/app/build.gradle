@@ -1,0 +1,53 @@
+plugins { id 'com.android.application' }
+
+// The Windows build script uses an NTFS cache for reliable incremental writes,
+// including when the source checkout is on an external exFAT drive.
+layout.buildDirectory = file(providers.gradleProperty('jingliuBuildDir').orElse('build').get())
+
+def signingFile = rootProject.file('../.android-signing/signing.properties')
+def releaseSigning = new Properties()
+if (signingFile.exists()) signingFile.withInputStream { releaseSigning.load(it) }
+
+android {
+    namespace 'com.jingliu.memories'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        applicationId 'com.jingliu.memories'
+        minSdk 26
+        targetSdk 36
+        versionCode 2
+        versionName '1.1.0'
+    }
+    if (signingFile.exists()) {
+        signingConfigs {
+            release {
+                storeFile rootProject.file('../.android-signing/release.jks')
+                storePassword releaseSigning.getProperty('storePassword')
+                keyAlias 'jingliu'
+                keyPassword releaseSigning.getProperty('storePassword')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (signingFile.exists()) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+// Bundle the same production website, including stars, fonts and photos.
+tasks.register('syncWebAssets', Sync) {
+    from rootProject.file('../dist')
+    into layout.projectDirectory.dir('src/main/assets/web')
+    doFirst {
+        if (!rootProject.file('../dist/index.html').exists())
+            throw new GradleException('Run npm run build before building the APK.')
+    }
+}
+tasks.named('preBuild').configure { dependsOn 'syncWebAssets' }
