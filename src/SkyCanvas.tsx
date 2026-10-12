@@ -117,15 +117,15 @@ export const SkyCanvas=forwardRef<SkyHandle,Props>(function SkyCanvas(props,ref)
       const moving=Math.abs(angle(s.targetRa-s.ra))>0.000005||Math.abs(s.targetDec-s.dec)>0.000005||Math.abs(s.targetFov-s.fov)>.005;
       if(!moving){s.ra=s.targetRa;s.dec=s.targetDec;s.fov=s.targetFov;}
       ca=Math.cos(s.ra);sa=Math.sin(s.ra);cd=Math.cos(s.dec);sd=Math.sin(s.dec);scale=height/(2*Math.tan(s.fov*RAD/2));
-      ox=width*(width<760?.51:.625);oy=height*(width<760?(p.selectedId?.length?.35:.53):.46);
+      ox=width*.5;oy=height*.5;
       if(memorySource!==p.memories||favoriteSource!==p.favorites||selectedSource!==p.selectedId){
         memorySource=p.memories;favoriteSource=p.favorites;selectedSource=p.selectedId;
         memories=new Map(p.memories.map(m=>[m.starId,m]));favorites=new Set(p.favorites);
         const ids=new Set([...memories.keys(),...favorites,...(p.selectedId?[p.selectedId]:[])]);
         specialStars=[...ids].flatMap(id=>{const star=starMap[id];if(!star)return [];const a=star.ra*15*RAD,d=star.dec*RAD;return [{star,x:Math.cos(d)*Math.cos(a),y:Math.cos(d)*Math.sin(a),z:Math.sin(d)}];});
       }
-      const bg=ctx.createLinearGradient(0,0,width,height);bg.addColorStop(0,'#0a1424');bg.addColorStop(.52,'#142638');bg.addColorStop(1,'#091423');ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
-      ctx.globalAlpha=.8;ctx.drawImage(nebula,-width*.15+angle(s.ra-5.65*15*RAD)*80,-height*.15,width*1.4,height*1.35);ctx.globalAlpha=1;
+      const bg=ctx.createRadialGradient(width*.55,height*.45,0,width*.5,height*.5,Math.max(width,height)*.65);bg.addColorStop(0,'#122333');bg.addColorStop(1,'#101c2a');ctx.fillStyle=bg;ctx.fillRect(0,0,width,height);
+      ctx.globalAlpha=.18;ctx.drawImage(nebula,-width*.15+angle(s.ra-5.65*15*RAD)*80,-height*.15,width*1.4,height*1.35);ctx.globalAlpha=1;
       const tint=ctx.createRadialGradient(width*.68,height*.4,0,width*.55,height*.5,Math.max(width,height)*.75);
       const phase=s.ra/(15*RAD),warm=(Math.cos((phase-18)*Math.PI/12)+1)/2;
       tint.addColorStop(0,`rgba(${Math.round(42+warm*34)},${Math.round(77-warm*19)},${Math.round(110-warm*16)},.17)`);tint.addColorStop(1,'rgba(15,25,40,0)');ctx.fillStyle=tint;ctx.fillRect(0,0,width,height);
@@ -144,7 +144,7 @@ export const SkyCanvas=forwardRef<SkyHandle,Props>(function SkyCanvas(props,ref)
       }
       hits=new Map();let visible=0;
       const zoomLevel=Math.max(0,Math.log2(66/s.fov));
-      const visibleStars:Hit[]=[],magnitudeLimit=Math.min(catalogStats.maxMagnitude,p.density+zoomLevel*.5);
+      const visibleStars:Hit[]=[],magnitudeLimit=Math.min(catalogStats.maxMagnitude,p.density+zoomLevel*.8);
       function drawStar(star:Star,vx:number,vy:number,vz:number){
         // Reject offscreen coordinates before creating objects or drawing sprites.
         const horizontal=ca*vx+sa*vy,depth=cd*horizontal+sd*vz;
@@ -152,8 +152,18 @@ export const SkyCanvas=forwardRef<SkyHandle,Props>(function SkyCanvas(props,ref)
         const x=ox-(ca*vy-sa*vx)*scale/depth,y=oy-(cd*vz-sd*horizontal)*scale/depth;
         if(x<-80||x>width+80||y<-80||y>height+80)return;
         if(p.landscape&&y>height*.8+Math.sin(x/190)*27+Math.cos(x/95)*12)return;
-        const radius=Math.max(1.15,2.9-star.mag*.23)*p.starSize+zoomLevel*.18;
-        const hit={star,x,y,r:radius};visibleStars.push(hit);visible++;
+        // Keep neighboring glows from merging on short phone viewports.
+        // The catalog is brightness-sorted; fainter neighbors appear as the
+        // view is enlarged. Saved and explicitly selected stars stay visible.
+        if(zoomLevel<2&&star.id!==p.selectedId&&!memories.has(star.id)&&!favorites.has(star.id)){
+          const spacing=clamp(9*p.starSize/(1+zoomLevel*.6),5,14),gx=Math.floor(x/28),gy=Math.floor(y/28);
+          for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
+            const cell=hits.get((gy+dy)*columns+gx+dx);
+            if(cell?.some(hit=>Math.hypot(hit.x-x,hit.y-y)<spacing))return;
+          }
+        }
+        const radius=Math.max(.95,2.6-star.mag*.26)*p.starSize+zoomLevel*.22;
+        const hit={star,x,y,r:radius};visibleStars.push(hit);if(x>=0&&x<=width&&y>=0&&y<=height)visible++;
         const key=Math.floor(y/28)*columns+Math.floor(x/28),cell=hits.get(key);if(cell)cell.push(hit);else hits.set(key,[hit]);
       }
       // The active catalog is sorted by magnitude, so dim rows need no per-frame
@@ -164,7 +174,7 @@ export const SkyCanvas=forwardRef<SkyHandle,Props>(function SkyCanvas(props,ref)
       }
       for(const item of specialStars){if(starIndex.has(item.star.id)&&item.star.mag<=magnitudeLimit)continue;drawStar(item.star,item.x,item.y,item.z);}
       // Paint faint stars first so their halos cannot cover the brighter cores.
-      for(let i=visibleStars.length-1;i>=0;i--){const hit=visibleStars[i],point=sprite(hit.star.color,hit.r,hit.star.mag<2.5);ctx.globalAlpha=clamp(Math.pow(10,-Math.max(0,hit.star.mag-2)*.105),.26,1);ctx.drawImage(point.image,hit.x-point.size/2,hit.y-point.size/2,point.size,point.size);}
+      for(let i=visibleStars.length-1;i>=0;i--){const hit=visibleStars[i],point=sprite(hit.star.color,hit.r,hit.star.mag<2.5);const edge=clamp(Math.min(hit.x,width-hit.x,hit.y,height-hit.y)/24,0,1);ctx.globalAlpha=clamp(Math.pow(10,-Math.max(0,hit.star.mag-2)*.105),.26,1)*edge;ctx.drawImage(point.image,hit.x-point.size/2,hit.y-point.size/2,point.size,point.size);}
       ctx.globalAlpha=1;
       const occupied:{x:number;y:number;w:number;h:number}[]=[];
       function label(text:string,x:number,y:number,color:string,size=10){
@@ -175,13 +185,13 @@ export const SkyCanvas=forwardRef<SkyHandle,Props>(function SkyCanvas(props,ref)
       }
       for(const hit of visibleStars){
         const {star,x,y}=hit,memory=memories.get(star.id),favorite=favorites.has(star.id);
-        if(memory||favorite){ctx.strokeStyle=memory?'#d7b97599':'#96c5bcaa';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(x,y,memory?10:7,0,TAU);ctx.stroke();}
+        if((memory||favorite)&&(p.labels||star.id===p.selectedId)){ctx.strokeStyle=memory?'#d7b97599':'#96c5bcaa';ctx.lineWidth=.8;ctx.beginPath();ctx.arc(x,y,memory?10:7,0,TAU);ctx.stroke();}
         if(memory&&p.labels)label(memory.title.length>11?memory.title.slice(0,11)+'…':memory.title,x+18,y-12,'#d8c095',11);
         if(p.labels&&(star.mag<1.8||star.id===p.selectedId||(s.fov<22&&star.mag<5.5)))label(star.name,x+12,y+17,'rgba(210,221,229,.72)');
         if(star.id===p.selectedId){ctx.strokeStyle='#ead2a0';ctx.lineWidth=1.3;const radius=18;for(let j=0;j<4;j++){const a=j*Math.PI/2+Math.PI/8;ctx.beginPath();ctx.arc(x,y,radius,a,a+Math.PI/4);ctx.stroke();}}
       }
       if(p.landscape){const horizon=height*.8,g=ctx.createLinearGradient(0,horizon-100,0,height);g.addColorStop(0,'rgba(165,151,116,0)');g.addColorStop(.65,'rgba(159,154,115,.2)');g.addColorStop(1,'rgba(102,116,95,.4)');ctx.fillStyle=g;ctx.fillRect(0,horizon-100,width,height-horizon+100);for(let layer=0;layer<3;layer++){ctx.beginPath();ctx.moveTo(0,height);for(let x=0;x<=width+10;x+=10)ctx.lineTo(x,horizon+layer*38+Math.sin(x/(190-layer*30)+layer*3)*27+Math.cos(x/95+layer)*12);ctx.lineTo(width,height);ctx.closePath();ctx.fillStyle=['#243b3e','#1b3034','#14262b'][layer];ctx.fill();}}
-      const vignette=ctx.createRadialGradient(width*.58,height*.4,height*.18,width*.5,height*.5,width*.8);vignette.addColorStop(0,'rgba(7,15,27,0)');vignette.addColorStop(1,'rgba(7,15,27,.46)');ctx.fillStyle=vignette;ctx.fillRect(0,0,width,height);
+      const vignette=ctx.createRadialGradient(width*.5,height*.5,Math.min(width,height)*.15,width*.5,height*.5,Math.max(width,height)*.63);vignette.addColorStop(0,'rgba(16,28,42,0)');vignette.addColorStop(.65,'rgba(16,28,42,.08)');vignette.addColorStop(1,'rgba(16,28,42,.75)');ctx.fillStyle=vignette;ctx.fillRect(0,0,width,height);
       if(time-lastReported>150||!moving){const nextFov=Math.round(s.fov);if(nextFov!==lastFov){p.onViewChange(nextFov);lastFov=nextFov;}if(visible!==lastVisible){p.onVisibleChange(visible);lastVisible=visible;}const region=regionAt(s.ra/(15*RAD));if(region!==lastRegion){p.onRegionChange(region);lastRegion=region;}lastReported=time;}
       if(moving)schedule();
     }

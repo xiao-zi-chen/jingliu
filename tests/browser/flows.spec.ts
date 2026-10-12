@@ -18,9 +18,9 @@ test('sky search, memory lookup, settings and viewport controls',async({page})=>
   await page.getByRole('button',{name:'星图设置',exact:true}).click();
   await page.getByRole('switch',{name:'赤道网格'}).click();
   await expect(page.getByRole('switch',{name:'赤道网格'})).toHaveAttribute('aria-checked','true');
-  await page.getByRole('button',{name:'关闭星图设置'}).click();
   await page.getByRole('button',{name:'旷野',exact:true}).click();
   await expect(page.getByRole('button',{name:'旷野',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('button',{name:'关闭星图设置'}).click();
   await page.getByRole('button',{name:'放大星图'}).click();
   await expect(page.locator('.sky-status')).toContainText('51°');
   await page.getByRole('button',{name:'回到初始星空'}).click();

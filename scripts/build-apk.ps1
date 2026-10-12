@@ -58,10 +58,12 @@ try {
 
 $releaseDirectory = Join-Path $projectRoot 'release'
 New-Item -ItemType Directory -Path $releaseDirectory -Force | Out-Null
-$apk = Join-Path $releaseDirectory 'jingliu-1.1.0.apk'
+$appVersion = (Get-Content -LiteralPath (Join-Path $projectRoot 'package.json') -Raw | ConvertFrom-Json).version
+$apkName = "jingliu-$appVersion.apk"
+$apk = Join-Path $releaseDirectory $apkName
 Copy-Item -LiteralPath (Join-Path $nativeBuildDir 'outputs/apk/release/app-release.apk') -Destination $apk -Force
 & "$AndroidSdk\build-tools\36.0.0\apksigner.bat" verify --verbose $apk
 if ($LASTEXITCODE -ne 0) { throw 'APK signature verification failed.' }
 $hash = (Get-FileHash -LiteralPath $apk -Algorithm SHA256).Hash.ToLowerInvariant()
-[IO.File]::WriteAllText("$apk.sha256", "$hash  jingliu-1.1.0.apk`n", [Text.Encoding]::ASCII)
+[IO.File]::WriteAllText("$apk.sha256", "$hash  $apkName`n", [Text.Encoding]::ASCII)
 Write-Output "APK ready: $apk"

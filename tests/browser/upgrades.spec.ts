@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
-test('catalog stars are clickable on canvas and favorites survive reload and navigation',async({page},testInfo)=>{
+test('catalog stars are clickable on canvas and favorites survive reload and navigation',async({page})=>{
   const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto('/');
   await page.getByLabel('搜索星星或记忆').fill('HIP 677');
@@ -23,7 +23,7 @@ test('catalog stars are clickable on canvas and favorites survive reload and nav
   await page.getByRole('button',{name:'关闭星体详情'}).click();
   await page.waitForTimeout(100);
   const canvas=page.locator('canvas'),box=(await canvas.boundingBox())!;
-  await canvas.click({position:{x:box.width*(testInfo.project.name==='mobile'?.51:.625),y:box.height*(testInfo.project.name==='mobile'?.53:.46)}});
+  await canvas.click({position:{x:box.width*.5,y:box.height*.5}});
   await expect(panel).toBeVisible();
   await page.reload();
   await page.goto('/#profile');
@@ -211,7 +211,7 @@ test('faint stars removed from normal browsing still locate saved memories and f
   await page.getByRole('button',{name:'关闭星体详情'}).click();
   await page.waitForTimeout(100);
   const canvas=page.locator('canvas'),box=(await canvas.boundingBox())!;
-  await canvas.click({position:{x:box.width*(testInfo.project.name==='mobile'?.51:.625),y:box.height*(testInfo.project.name==='mobile'?.53:.46)}});
+  await canvas.click({position:{x:box.width*.5,y:box.height*.5}});
   await expect(page.getByRole('complementary',{name:`${name}的详情`})).toBeVisible();
 });
 
@@ -220,7 +220,7 @@ test('stationary sky stops drawing and responds again to zoom and size changes',
     (window as unknown as {skyPaints:number}).skyPaints=0;
     const original=CanvasRenderingContext2D.prototype.fillRect;
     CanvasRenderingContext2D.prototype.fillRect=function(x,y,width,height){
-      if(this.canvas.classList.contains('sky-canvas')&&x===0&&y===0&&width>300&&height>200)(window as unknown as {skyPaints:number}).skyPaints++;
+      if(this.canvas.classList.contains('sky-canvas')&&x===0&&y===0&&width>0&&height>0)(window as unknown as {skyPaints:number}).skyPaints++;
       original.call(this,x,y,width,height);
     };
   });

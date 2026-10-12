@@ -9,8 +9,8 @@ test('dragging, zoom gestures and fullscreen editing work on the real canvas',as
   if(testInfo.project.name==='mobile') {
     const session=await page.context().newCDPSession(page);
     const y=box.y+box.height*0.58;
-    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.width*.35,y,id:0},{x:box.width*.65,y,id:1}]});
-    await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:box.width*.18,y,id:0},{x:box.width*.82,y,id:1}]});
+    await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width*.35,y,id:0},{x:box.x+box.width*.65,y,id:1}]});
+    await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:box.x+box.width*.18,y,id:0},{x:box.x+box.width*.82,y,id:1}]});
     await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
     await expect.poll(async()=>Number((await page.locator('.sky-status').innerText()).match(/(\d+)°/)?.[1])).toBeLessThan(45);
   } else {
